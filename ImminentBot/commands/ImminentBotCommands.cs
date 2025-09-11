@@ -5,7 +5,7 @@ using DSharpPlus.SlashCommands;
 using ImminentBot;
 using ImminentBot.Config;
 using ImminentBot.Embed;
-using ImminentBot.Enitites;
+using ImminentBot.Enitities;
 
 public class ImminentBotCommands
 {

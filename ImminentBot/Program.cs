@@ -2,16 +2,18 @@
 using DSharpPlus.Commands;
 using DSharpPlus.Commands.Processors.SlashCommands;
 using DSharpPlus.Entities;
-using DSharpPlus.SlashCommands;
 using ImminentBot.Config;
 using ImminentBot.Embed;
-using static System.Runtime.InteropServices.JavaScript.JSType;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+
 
 namespace ImminentBot;
 
 internal class Program
 {
- 
+    public static DiscordClient? DiscordClient { get; private set; }
+
     static async Task Main(string[] args)
     {
         var jsonReader = new JSONReader();
@@ -23,12 +25,11 @@ internal class Program
             throw new InvalidOperationException("Discord token is missing in configuration.");
         }
 
-        var discordBuilder = DiscordClientBuilder.CreateDefault(
-            jsonReader.token, DiscordIntents.All);
-
-
-        discordBuilder.ConfigureEventHandlers
-           (
+        var discord = DiscordClientBuilder
+            .CreateDefault(
+                jsonReader.token, DiscordIntents.All)
+            .ConfigureEventHandlers
+            (
                b => b.HandleMessageCreated(async (s, e) =>
                {
                    if (e.Message.Channel!.Id.ToString() == jsonReader.botChannelId && !e.Author.IsBot)
@@ -47,24 +48,22 @@ internal class Program
 
                    }
                })
-           );
+            ).UseCommands(
+                (provider, extension) =>
+                {
+                    extension.AddCommands<ImminentBotCommands>();
 
+                    extension.AddProcessor(new SlashCommandProcessor());
+                }
+            ).ConfigureServices(s =>
+                s.AddDbContext<DataContext>(o => o.UseNpgsql("Host=localhost;Database=imminentbot;Username=postgres;Password=yourpassword"))
+            ).Build();
 
-        var commands = discordBuilder.UseCommands(
-            (provider, extension) =>
-            {
-                extension.AddCommands<ImminentBotCommands>();
-
-                extension.AddProcessor(new SlashCommandProcessor());
-            }
-        );
-
-
-        var client = discordBuilder.Build();
+        DiscordClient = discord;
 
         DiscordActivity status = new(" Albion Online", DiscordActivityType.Playing);
 
-        await client.ConnectAsync(status, DiscordUserStatus.Online);
+        await discord.ConnectAsync(status, DiscordUserStatus.Online);
 
 
         _ = Task.Run(async () =>
@@ -75,15 +74,30 @@ internal class Program
 
                 if (Data.previousBotMessage != null)
                 {
-                    var updatedObjectives = EmbedFunctions.checkObjectives(Data.GetAllObjectives(), client).Result;
+                    var updatedObjectives = EmbedFunctions.checkObjectives(Data.GetAllObjectives()).Result;
                     var embed = EmbedFunctions.CreateEmbed(updatedObjectives);
-                    
+
                     await Data.previousBotMessage.ModifyAsync(embed);
 
                 }
             }
         });
 
+        Data.objectivesEmoji = [
+            DiscordEmoji.FromName(discord,":pick:"),
+            DiscordEmoji.FromName(discord,":axe:"),
+            DiscordEmoji.FromName(discord,":rock:"),
+            DiscordEmoji.FromName(discord,":rose:"),
+            DiscordEmoji.FromName(discord,":donkey:"),
+            DiscordEmoji.FromName(discord,":cloud_tornado:"),
+            DiscordEmoji.FromName(discord,":white_circle:"),
+        ];
+
+        using (var scope = discord.ServiceProvider.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<DataContext>();
+            db.Database.Migrate();
+        }
 
 
         await Task.Delay(-1);

@@ -1,20 +1,18 @@
-﻿using DSharpPlus;
-using DSharpPlus.Entities;
+﻿using DSharpPlus.Entities;
 using DSharpPlus.SlashCommands;
-using ImminentBot.Enitites;
+using ImminentBot.Enitities;
 using ImminentBot.methods;
-using System.Threading.Tasks;
 
 namespace ImminentBot.Embed;
 
 public static class EmbedFunctions
 {
-    public static async Task<List<Objectives>> checkObjectives(List<Objectives> objectives, DiscordClient discord)
+    public static async Task<List<Objectives>> checkObjectives(List<Objectives> objectives)
     {
 
         var newList = objectives.Where(obj => ((DateTimeOffset)obj.Date).ToUnixTimeSeconds() > DateTimeOffset.UtcNow.ToUnixTimeSeconds()).ToList();
 
-        var service = new ImminentBotService(discord);
+        var service = new ImminentBotService();
 
         foreach (Objectives obj in newList)
         {
@@ -26,12 +24,9 @@ public static class EmbedFunctions
                 await service.pingUser();
                 obj.isPing = true;
             }
-
         }
-
         return newList;
     }
-
 
     public static DiscordEmbed CreateEmbed(List<Objectives> objectives)
     {
@@ -44,30 +39,39 @@ public static class EmbedFunctions
 
         var obsj = objectives.OrderBy(o => o.Type).ThenBy(s => s.Tier);
 
-
-
         foreach (var obj in obsj)
         {
             var time = ((DateTimeOffset)obj.Date).ToUnixTimeSeconds();
             var color = DiscordColor.Gray;
 
-            switch (obj.Tier!.ToLower())
+            string emoji = "";
+
+            switch (obj.Type.GetName()!.ToLower())
             {
-                case string tier when tier.Contains(".4") || tier.Contains("gold"):
-                    color = DiscordColor.Gold;
+                case "ore":
+                    emoji = Data.objectivesEmoji![0].Name;
                     break;
-                case string tier when tier.Contains(".3") || tier.Contains("purple"):
-                    color = DiscordColor.Purple;
+                case "wood":
+                    emoji = Data.objectivesEmoji![1].Name;
                     break;
-                case string tier when tier.Contains(".2") || tier.Contains("blue"):
-                    color = DiscordColor.Blue;
+                case "stone":
+                    emoji = Data.objectivesEmoji![2].Name;
                     break;
-                case string tier when tier.Contains(".1") || tier.Contains("green"):
-                    color = DiscordColor.Green;
+                case "fiber":
+                    emoji = Data.objectivesEmoji![3].Name;
+                    break;
+                case "hide":
+                    emoji = Data.objectivesEmoji![4].Name;
+                    break;
+                case "vortex":
+                    emoji = Data.objectivesEmoji![5].Name;
+                    break;
+                case "core":
+                    emoji = Data.objectivesEmoji![6].Name;
                     break;
             }
 
-            embed.AddField($"# {obj.Tier} {obj.Type.GetName()!}", $"<t:{time.ToString()}:R> (UTC){obj.Date:HH:mm:ss} {obj.TimedUser} - timed");
+            embed.AddField($" {obj.Tier} Tier {obj.Type.GetName()!} {emoji}", $"<t:{time.ToString()}:R> (UTC){obj.Date:HH:mm:ss} posted by {obj.TimedUser}");
         }
 
 

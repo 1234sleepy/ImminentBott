@@ -1,9 +1,10 @@
 ﻿using DSharpPlus.SlashCommands;
 
-namespace ImminentBot.Enitites;
+namespace ImminentBot.Enitities;
 
 public class Objectives
 {
+    public Guid Id { get; set; }
     public ObjectiveType Type { get; set; }
     public string? Zone { get; set; }
     public string? Tier { get; set; }
@@ -29,3 +30,4 @@ public enum ObjectiveType
     [ChoiceName("fiber")]
     fiber,
 }
+

@@ -1,12 +1,15 @@
 ﻿using DSharpPlus.Entities;
-using ImminentBot.Enitites;
+using ImminentBot.Enitities;
 
 namespace ImminentBot;
 
 public static class Data
 {
+
     public static List<Objectives> SavedObjectives = new List<Objectives>();
     public static DiscordMessage? previousBotMessage { get; set; }
+
+    public static DiscordEmoji[]? objectivesEmoji { get; set; }
 
     public static List<Objectives> GetAllObjectives()
     {
@@ -28,5 +31,5 @@ public static class Data
 
         return SavedObjectives;
     }
-
+    
 }

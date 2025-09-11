@@ -1,0 +1,21 @@
+version: '3.9'
+
+name: "imminent-bot"
+
+networks:
+ default:
+  name: 'data'
+
+volumes:
+ data-pg:
+ 
+services:
+  postgres:
+    container_name: 'data-pg'
+    image: 'postgres:latest'
+    ports:
+      - '5432:5432'  
+    environment: 
+      POSTGRES_PASSWORD: 'postgrespw'
+    volumes:
+      - data-pg:/var/lib/postgresql/data
