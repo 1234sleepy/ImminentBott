@@ -11,7 +11,7 @@ public class JSONReader
     public string? guildId { get; set; }
     public async Task ReadJSON()
     {
-        using (StreamReader sr = new StreamReader("config.json"))
+        using (StreamReader sr = new StreamReader("/etc/secrets/config.json"))
         {
             string json = await sr.ReadToEndAsync();
             JSONStructe? data = JsonConvert.DeserializeObject<JSONStructe>(json);
