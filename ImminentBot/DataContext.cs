@@ -1,10 +1,15 @@
 ﻿using ImminentBot.Enitities;
 using Microsoft.EntityFrameworkCore;
 
-namespace ImminentBot
+namespace ImminentBot;
+
+public class DataContext : DbContext
 {
-    public class DataContext(DbContextOptions<DataContext> options) : DbContext(options)
+    public DataContext(DbContextOptions<DataContext> options)
+        : base(options)
     {
-        public DbSet<Objectives> Objectives { get; set; }
     }
+
+    public DbSet<Objectives> Objectives { get; set; }
 }
+

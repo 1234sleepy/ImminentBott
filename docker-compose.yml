@@ -19,3 +19,7 @@ services:
       POSTGRES_PASSWORD: 'postgrespw'
     volumes:
       - data-pg:/var/lib/postgresql/data
+
+# docker compose up -d
+# dotnet ef migrations add (name) -p Storage -s API                        (DO not copy)- migrations
+# dotnet ef database update -p ImminentBot                            (DO not copy)- update db
