@@ -3,6 +3,7 @@ using DSharpPlus.Commands;
 using DSharpPlus.Commands.Processors.SlashCommands;
 using DSharpPlus.Entities;
 using ImminentBot.Embed;
+using ImminentBot.Storage.Objectives.GetAllObjectives;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -38,8 +39,12 @@ internal class Program
 
                         await e.Channel.DeleteMessageAsync(e.Message);
 
-                        var obj = Data.GetAllObjectives();
-                        var embed = EmbedFunctions.CreateEmbed(obj);
+                        using var scope = DiscordClient!.ServiceProvider.CreateScope();
+                        var db = scope.ServiceProvider.GetRequiredService<DataContext>();
+                        var storage = new GetAllObjectivesStorage(db);
+
+                        var obj = storage.GetAllObjectives();
+                        var embed = EmbedFunctions.CreateEmbed(obj.Result);
 
                         var mess = await e.Message.RespondAsync(embed);
                         Data.previousBotMessage = mess;
@@ -61,6 +66,8 @@ internal class Program
 
         DiscordActivity status = new("Albion Online", DiscordActivityType.Playing);
 
+
+
         await discord.ConnectAsync(status, DiscordUserStatus.Online);
         _ = Task.Run(async () =>
         {
@@ -68,13 +75,17 @@ internal class Program
             {
                 await Task.Delay(TimeSpan.FromSeconds(5));
 
-                if (Data.previousBotMessage != null)
+                using (var scope = discord.ServiceProvider.CreateScope())
                 {
-                    var updatedObjectives = await EmbedFunctions.checkObjectives(Data.GetAllObjectives());
+                    var db = scope.ServiceProvider.GetRequiredService<DataContext>();
+                    var storage = new GetAllObjectivesStorage(db);
+                    var obj = storage.GetAllObjectives();
+                    var updatedObjectives = await EmbedFunctions.checkObjectives(obj.Result);
                     var embed = EmbedFunctions.CreateEmbed(updatedObjectives);
 
                     await Data.previousBotMessage.ModifyAsync(embed);
                 }
+
             }
         });
 
